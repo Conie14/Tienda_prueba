@@ -10,7 +10,8 @@
     [
         'name' => $categoria->nombre,
     ],
-]">
+]"> 
+
 
 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-4">
     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Editar categoría</h2>
