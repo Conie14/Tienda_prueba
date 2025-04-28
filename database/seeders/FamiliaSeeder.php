@@ -129,14 +129,14 @@ class FamiliaSeeder extends Seeder
             foreach ($categorias as $categoria => $subcategorias) {
                 $categoriaModel = \App\Models\Categoria::create([
                     'nombre' => $categoria,
-                    'id_familia' => $familiaModel->id,
+                    'id_familia' => $familiaModel->id_familia,
                 ]);
         
                 foreach ($subcategorias as $subcategoria) {
                     \App\Models\Subcategoria::create([
                         'nombre' => $subcategoria['nombre'],
                         'descripcion' => $subcategoria['descripcion'],
-                        'id_categoria' => $categoriaModel->id,
+                        'id_categoria' => $categoriaModel->id_categoria,
                     ]);
                 }
             }

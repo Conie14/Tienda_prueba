@@ -10,11 +10,12 @@ class Producto extends Model
     //
     use HasFactory;
 
+    protected $primaryKey = 'id_producto';
     protected $fillable = [
         'sku',
         'nombre',
         'descripcion',
-        'imagen_path',
+        'imagen',
         'precio',
         'id_subcategoria',
         'id_provedor',
@@ -23,13 +24,13 @@ class Producto extends Model
     //relacion uno a muchos inversa provedor
     public function provedor()
     {
-        return $this->belongsTo(Provedor::class);
+        return $this->belongsTo(Provedor::class, 'id_provedor');
     }
 
     //relacion uno a muchos inversa
     public function subcategoria()
     {
-        return $this->belongsTo(Subcategoria::class);
+        return $this->belongsTo(Subcategoria::class, 'id_subcategoria');
     }
 
 

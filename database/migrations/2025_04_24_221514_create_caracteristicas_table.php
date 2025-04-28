@@ -12,16 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('caracteristicas', function (Blueprint $table) {
-            $table->id('id_caracteristica');
-
+            $table->id('id_caracteristica'); // Clave primaria con nombre específico
             $table->string('valor');
             $table->string('descripcion');
-
-            $table->foreignId('id_opcion')
-                ->constrained('opcions', 'id_opcion')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
-
+            // Definir correctamente el id_opcion como clave foránea
+            $table->unsignedBigInteger('id_opcion');
+            $table->foreign('id_opcion')->references('id_opcion')->on('opcions')->onDelete('cascade');
             $table->timestamps();
         });
     }

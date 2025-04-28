@@ -12,18 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('caracteristica_variante', function (Blueprint $table) {
-            $table->id('id_cv');
-            //caracteristica
-            $table->foreignId('id_caracteristica')
-                ->constrained('caracteristicas', 'id_caracteristica')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
-            //variante
-            $table->foreignId('id_variante')
-                ->constrained('variantes', 'id_variante')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
+            $table->id();
             
+            $table->unsignedBigInteger('id_caracteristica');
+            $table->foreign('id_caracteristica')
+                  ->references('id_caracteristica')
+                  ->on('caracteristicas')
+                  ->onDelete('cascade')
+                  ->onUpdate('cascade');
+                  
+            $table->unsignedBigInteger('id_variante');
+            $table->foreign('id_variante')
+                  ->references('id_variante')  // Asegúrate de que esta es la clave primaria correcta en la tabla variantes
+                  ->on('variantes')
+                  ->onDelete('cascade')
+                  ->onUpdate('cascade');
+                  
             $table->timestamps();
         });
     }

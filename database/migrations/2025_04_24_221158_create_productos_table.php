@@ -25,15 +25,12 @@ return new class extends Migration
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
 
-
-            //provedors
-            //$table->foreignId('id_provedor')
-            //    ->constrained('provedors', 'id_provedor')
-            //    ->onDelete('cascade')
-            //    ->onUpdate('cascade');
-        
-
-
+            // proveedores
+            $table->foreignId('id_provedor')
+                ->constrained('provedors', 'id_provedor')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
+            
                 
             $table->timestamps();
         });

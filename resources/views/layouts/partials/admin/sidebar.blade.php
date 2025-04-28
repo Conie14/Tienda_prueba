@@ -7,6 +7,13 @@
             'active' => request()->routeIs('admin.dashboard'),
         ],
         [
+            //opciones
+            'icon' => 'fas fa-cogs',
+            'name' => 'Opciones',
+            'route' => route('admin.opciones.index'),
+            'active' => request()->routeIs('admin.opciones.*'),
+        ],
+        [
             //Familia de productos
             'icon' => 'fas fa-paw',
             'name' => 'Familias',          
@@ -20,7 +27,30 @@
             'route' => route('admin.categorias.index'),
             'active' => request()->routeIs('admin.categorias.*'),
 
-        ]
+        ],
+        [
+            //subcategorias de productos
+            'icon' => 'fas fa-vest-patches',
+            'name' => 'Subcategorias',
+            'route' => route('admin.subcategorias.index'),
+            'active' => request()->routeIs('admin.subcategorias.*'),
+        ],
+        [
+            //provedor
+            'icon' => 'fas fa-box',
+            'name' => 'Provedores',
+            'route' => route('admin.provedores.index'),
+            'active' => request()->routeIs('admin.provedores.*'),
+        ],
+        [
+            //productos
+            'icon' => 'fas fa-box-open',
+            'name' => 'Productos',
+            'route' => route('admin.productos.index'),
+            'active' => request()->routeIs('admin.productos.*'),
+        ],
+
+        
 
 
     ];

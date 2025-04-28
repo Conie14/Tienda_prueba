@@ -10,6 +10,7 @@ class Subcategoria extends Model
     //
     use HasFactory;
 
+    protected $primaryKey = 'id_subcategoria';
     protected $fillable = [
         'nombre',
         'descripcion',
@@ -19,7 +20,7 @@ class Subcategoria extends Model
     //relacion uno a muchos inversa
     public function categoria()
     {
-        return $this->belongsTo(Categoria::class);
+        return $this->belongsTo(Categoria::class, 'id_categoria');
     }
 
     //relacion uno a muchos productos

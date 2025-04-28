@@ -2,8 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Producto;
+use App\Models\Provedor;
+use Illuminate\Support\Facades\Storage;
+use App\Models\Familia;
+use App\Models\Opcion;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,21 +16,22 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Eliminar el directorio y su contenido, si existe
+        if (Storage::disk('public')->exists('productos')) {
+            Storage::disk('public')->deleteDirectory('productos');
+        }
 
-        //User::factory()->create([
-        //    'name' => 'Test User',
-        //    'email' => 'test@example.com',
-        //]);
+        // Crear el directorio "productos" en el disco público
+        Storage::disk('public')->makeDirectory('productos');
 
-
-        //llamar los seeders 
-
+        // Llamar los seeders
         $this->call([
             FamiliaSeeder::class,
-
+            OpcionSeeder::class,
         ]);
 
-
+        // Llamar los factories
+        Provedor::factory(10)->create();
+        Producto::factory(10)->create();
     }
 }

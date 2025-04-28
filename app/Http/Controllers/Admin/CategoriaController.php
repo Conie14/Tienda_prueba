@@ -93,15 +93,12 @@ class CategoriaController extends Controller
         
         // Corregir el mensaje de SweetAlert para reflejar que se actualiza una categoría, no una familia
         session()->flash('swal', [
+            'title' => 'Categoria actualizado',
+            'text' => 'La Categoria se ha actualizado correctamente',
             'icon' => 'success',
-            'title' => 'Categoría actualizada correctamente',
-            'text' => '',
-            'showCancelButton' => false,
-            'showConfirmButton' => false,
-            'timer' => 1500,
         ]);
         
-        return redirect()->route('admin.categorias.index', $categoria->id_categoria);
+        return redirect()->route('admin.categorias.edit', $categoria->id_categoria);
     }
 
     /**
