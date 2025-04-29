@@ -1,4 +1,4 @@
-```blade
+
 <x-admin-layout :breadcrumbs="[
     [
         'name' => 'Dashboard',
@@ -63,4 +63,3 @@
 @endif
 
 </x-admin-layout>
-```

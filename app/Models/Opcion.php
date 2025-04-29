@@ -10,6 +10,8 @@ class Opcion extends Model
     //
     use HasFactory;
 
+    protected $primaryKey = 'id_opcion';
+
     protected $fillable = [
         'nombre',
         'tipo',

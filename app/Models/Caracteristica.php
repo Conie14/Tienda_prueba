@@ -10,6 +10,8 @@ class Caracteristica extends Model
     //
     use HasFactory;
 
+    protected $primaryKey = 'id_caracteristica';
+
     protected $fillable = [
         'nombre',
         'valor',
@@ -22,6 +24,12 @@ class Caracteristica extends Model
     {
         return $this->belongsTo(Variante::class)
             ->withTimestamps();
+    }
+
+    //relacion uno a muchos opciones
+    public function opcion()
+    {
+        return $this->belongsTo(Opcion::class, 'id_opcion', 'id_opcion');
     }
 
 
