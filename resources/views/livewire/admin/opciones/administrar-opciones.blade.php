@@ -1,10 +1,23 @@
 <div>
     <section class="card bg-white shadow-md rounded-lg p-6">
+        <!-- Notification message -->
+        @if (session()->has('message'))
+            <div class="mb-4 px-4 py-2 bg-green-100 border border-green-400 text-green-700 rounded">
+                {{ session('message') }}
+            </div>
+        @endif
+        
+        @if (session()->has('error'))
+            <div class="mb-4 px-4 py-2 bg-red-100 border border-red-400 text-red-700 rounded">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <header class="mb-6 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
                 Administrar Opciones
             </h1>
-            <button wire:click="abrirModalCrear" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            <button wire:click="openModal" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
                 <i class="fas fa-plus mr-2"></i>Nueva Opción
             </button>
         </header>
@@ -37,34 +50,11 @@
                                     {{ $opcion->nombre }}
                                 </h2>
                                 <p class="text-sm text-gray-500">
-                                    @switch($opcion->tipo)
-                                        @case(1)
-                                            Talla
-                                            @break
-                                        @case(2)
-                                            Color
-                                            @break
-                                        @case(3)
-                                            Sexo
-                                            @break
-                                        @case(4)
-                                            Animal
-                                            @break
-                                        @default
-                                            Tipo: {{ $opcion->tipo }}
-                                    @endswitch
+                                    ID: {{ $opcion->id_opcion }} | Tipo: {{ $opcion->tipo }}
                                 </p>
                             </div>
                         </div>
                         
-                        <div class="flex items-center space-x-2">
-                            <button wire:click="abrirModalEditar({{ $opcion->id_opcion }})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button wire:click="confirmarEliminacion({{ $opcion->id_opcion }})" class="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
                     </div>
                     
                     <!-- Características de la opción -->
@@ -118,143 +108,88 @@
             
             @if($opciones->isEmpty())
                 <div class="p-8 text-center text-gray-500">
-                    <i class="fas fa-info-circle text-4xl mb-3"></i>
+                    <i class="fas fa-info-circle text-2xl mb-2"></i>
                     <p>No hay opciones registradas. Crea una nueva opción para empezar.</p>
                 </div>
             @endif
         </div>
     </section>
 
-    <!-- Modal para crear/editar opción -->
-    @if($modal)
+    <!-- Modal con Livewire -->
+    @if($openModal != false)
     <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="cerrarModal"></div>
-
+        <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true"></div>
+            
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
+                                Crear Nueva Opción
+                            </h3>
+                            <div class="mt-4">
+                                <form wire:submit.prevent="guardarOpcion">
+                                    <div class="grid gap-4">
+                                        <div>
+                                            <label class="block font-medium text-sm text-gray-700">
+                                                Nombre
+                                            </label>
+                                            <input wire:model.defer="nuevaOpcion.nombre" placeholder="Nombre de la opción" class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" />
+                                            @error('nuevaOpcion.nombre') 
+                                                <span class="text-red-500 text-xs mt-1">{{ $message }}</span> 
+                                            @enderror
+                                        </div>
 
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <form wire:submit.prevent="guardar">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-xl leading-6 font-bold text-gray-900 mb-4" id="modal-title">
-                                    {{ $modalTitulo }}
-                                </h3>
-                                
-                                <div class="mt-4 space-y-4">
-                                    <!-- Nombre de la opción -->
-                                    <div>
-                                        <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre de la opción</label>
-                                        <input wire:model="nombre" type="text" id="nombre" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                                        @error('nombre') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                    </div>
-                                    
-                                    <!-- Tipo de opción -->
-                                    <div>
-                                        <label for="tipo" class="block text-sm font-medium text-gray-700">Tipo de opción</label>
-                                        <select wire:model="tipo" id="tipo" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                                            <option value="">Seleccione un tipo</option>
-                                            <option value="1">Talla</option>
-                                            <option value="2">Color</option>
-                                            <option value="3">Sexo</option>
-                                            <option value="4">Animal</option>
-                                        </select>
-                                        @error('tipo') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                    </div>
-                                    
-                                    <!-- Características -->
-                                    <div>
-                                        <div class="flex justify-between items-center mb-2">
-                                            <label class="block text-sm font-medium text-gray-700">Características</label>
-                                            <button type="button" wire:click="agregarCaracteristica" class="text-blue-600 hover:text-blue-800 text-sm">
-                                                <i class="fas fa-plus mr-1"></i> Agregar
-                                            </button>
+                                        <div>
+                                            <label class="block font-medium text-sm text-gray-700 mb-1">
+                                                Tipo
+                                            </label>
+                                            <select wire:model.defer="nuevaOpcion.tipo" class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                                <option value="1">Talla</option>
+                                                <option value="2">Color</option>
+                                                <option value="3">Sexo</option>
+                                                <option value="4">Animal</option>
+                                            </select>
+                                            @error('nuevaOpcion.tipo') 
+                                                <span class="text-red-500 text-xs mt-1">{{ $message }}</span> 
+                                            @enderror
                                         </div>
                                         
-                                        @error('caracteristicas') <span class="text-red-500 text-xs block mb-2">{{ $message }}</span> @enderror
-                                        
-                                        <div class="space-y-3">
-                                            @foreach($caracteristicas as $index => $caracteristica)
-                                                <div class="flex space-x-2 items-start" wire:key="caracteristica-{{ $index }}">
-                                                    <div class="flex-grow">
-                                                        <div class="flex space-x-2">
-                                                            <div class="flex-1">
-                                                                <input type="text" wire:model="caracteristicas.{{ $index }}.valor" 
-                                                                    placeholder="{{ $tipo == 2 ? 'Código de color (ej: #FF0000)' : 'Valor' }}"
-                                                                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                                                                @error("caracteristicas.{$index}.valor") <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                                            </div>
-                                                            <div class="flex-1">
-                                                                <input type="text" wire:model="caracteristicas.{{ $index }}.descripcion" 
-                                                                    placeholder="Descripción"
-                                                                    class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                                                                @error("caracteristicas.{$index}.descripcion") <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                                            </div>
-                                                        </div>
-                                                        @if($tipo == 2 && isset($caracteristicas[$index]['valor']) && $caracteristicas[$index]['valor'])
-                                                            <div class="mt-1 flex items-center">
-                                                                <span class="inline-block h-4 w-4 rounded-full mr-1" style="background-color: {{ $caracteristicas[$index]['valor'] }};"></span>
-                                                                <span class="text-xs text-gray-500">Previsualización</span>
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                    <button type="button" wire:click="eliminarCaracteristica({{ $index }})" class="text-red-500 hover:text-red-700">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+                                        <div class="pt-4 border-t border-gray-200">
+                                            <div class="mb-3">
+                                                <label class="block font-medium text-sm text-gray-700">
+                                                    Valores
+                                                </label>
+                                            </div>
+                                            
+                                            <!-- Importante: wire:key garantiza que Livewire sepa qué elementos actualizar -->
+                                            @foreach ($nuevaOpcion['caracteristicas'] as $index => $caracteristica)
+                                                <div class="flex items-center mb-2" wire:key="caracteristica-{{ $index }}">
+                                                    <input type="text" wire:model.defer="nuevaOpcion.caracteristicas.{{ $index }}.valor" placeholder="Valor" class="w-1/3 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm mr-2" />
+                                                    <input type="text" wire:model.defer="nuevaOpcion.caracteristicas.{{ $index }}.descripcion" placeholder="Descripción" class="w-2/3 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" />
                                                 </div>
+                                                @error('nuevaOpcion.caracteristicas.'.$index.'.valor') 
+                                                    <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> 
+                                                @enderror
+                                                @error('nuevaOpcion.caracteristicas.'.$index.'.descripcion') 
+                                                    <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> 
+                                                @enderror
                                             @endforeach
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
-                            {{ $accion === 'crear' ? 'Crear' : 'Actualizar' }}
-                        </button>
-                        <button type="button" wire:click="cerrarModal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                            Cancelar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    @endif
-
-    <!-- Modal de confirmación para eliminar -->
-    @if($modalEliminar)
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" wire:click="cerrarModal"></div>
-
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <i class="fas fa-exclamation-triangle text-red-600"></i>
-                        </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                                Eliminar Opción
-                            </h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-500">
-                                    ¿Estás seguro de que deseas eliminar la opción "{{ $opcionSeleccionada ? $opcionSeleccionada->nombre : '' }}"? Esta acción no se puede deshacer.
-                                </p>
+                                </form>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" wire:click="eliminar" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
-                        Eliminar
+                <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button wire:click="guardarOpcion" type="button" class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Guardar
                     </button>
-                    <button type="button" wire:click="cerrarModal" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button wire:click="closeModal" type="button" class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         Cancelar
                     </button>
                 </div>
@@ -262,28 +197,4 @@
         </div>
     </div>
     @endif
-
-    <!-- Script para notificaciones -->
-    <script>
-        document.addEventListener('livewire:initialized', () => {
-            @this.on('notify', (data) => {
-                // Asumiendo que tienes alguna biblioteca de notificaciones como toastr o sweetalert
-                // Si no, puedes implementar tu propia solución de notificaciones
-                if (window.toastr) {
-                    toastr[data.tipo](data.mensaje);
-                } else if (window.Swal) {
-                    Swal.fire({
-                        icon: data.tipo,
-                        title: data.mensaje,
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                } else {
-                    alert(data.mensaje);
-                }
-            });
-        });
-    </script>
 </div>

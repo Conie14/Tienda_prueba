@@ -11,13 +11,41 @@ class ProvedorController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $provedors = Provedor::
-        orderBy('id_provedor', 'desc')
-        ->paginate(10);
-
+        $query = Provedor::query();
+        
+        // Aplicar búsqueda si existe
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nombre', 'LIKE', "%{$search}%")
+                  ->orWhere('direccion', 'LIKE', "%{$search}%")
+                  ->orWhere('telefono', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
+                  ->orWhere('id_provedor', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        // Aplicar ordenamiento
+        if ($request->has('sort')) {
+            $direction = $request->direction == 'desc' ? 'desc' : 'asc';
+            
+            if (in_array($request->sort, ['id_provedor', 'nombre', 'direccion', 'telefono', 'email'])) {
+                $query->orderBy($request->sort, $direction);
+            }
+        } else {
+            // Ordenamiento predeterminado
+            $query->orderBy('id_provedor', 'desc');
+        }
+        
+        // Paginación
+        $perPage = $request->has('per_page') ? (int)$request->per_page : 10;
+        $provedors = $query->paginate($perPage);
+        
+        // Mantener los parámetros de consulta en la URL
+        $provedors->appends($request->except('page'));
+        
         //retornar la vista provedor
         return view('admin.provedores.index', compact('provedors'));
     }
@@ -45,6 +73,17 @@ class ProvedorController extends Controller
         ]);
         // crear el provedor
         Provedor::create($request->all());
+        
+        // Agregar el mensaje SweetAlert a la sesión
+        session()->flash('swal', [
+            'icon' => 'success',
+            'title' => 'Proveedor creado correctamente',
+            'text' => '',
+            'showCancelButton' => false,
+            'showConfirmButton' => false,
+            'timer' => 1500,
+        ]);
+        
         return redirect()->route('admin.provedores.index')->with('success', 'Provedor creado correctamente');
     }
 
@@ -80,8 +119,8 @@ class ProvedorController extends Controller
         $provedor->update($request->all());
 
         session()->flash('swal', [
-            'title' => 'Provedor actualizado',
-            'text' => 'El provedor se ha actualizado correctamente',
+            'title' => 'Proveedor actualizado',
+            'text' => 'El proveedor se ha actualizado correctamente',
             'icon' => 'success',
         ]);
 
@@ -99,7 +138,7 @@ class ProvedorController extends Controller
         // Agregar el mensaje SweetAlert a la sesión
         session()->flash('swal', [
             'icon' => 'success',
-            'title' => 'Categoria eliminada correctamente',
+            'title' => 'Proveedor eliminado correctamente',
             'text' => '',
             'showCancelButton' => false,
             'showConfirmButton' => false,

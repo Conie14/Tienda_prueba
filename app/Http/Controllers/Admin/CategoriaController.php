@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Categoria;
+use App\Models\Familia;
 use Illuminate\Http\Request;
 
 class CategoriaController extends Controller
@@ -11,10 +12,48 @@ class CategoriaController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Cargar las categorías con la relación 'familia' para evitar consultas adicionales
-        $categorias = Categoria::with('familia')->orderBy('id_categoria', 'desc')->paginate(10);
+        $query = Categoria::with('familia');
+        
+        // Aplicar búsqueda si existe
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nombre', 'LIKE', "%{$search}%")
+                  ->orWhere('id_categoria', 'LIKE', "%{$search}%")
+                  ->orWhereHas('familia', function($q) use ($search) {
+                      $q->where('nombre', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Aplicar ordenamiento
+        if ($request->has('sort')) {
+            $direction = $request->direction == 'desc' ? 'desc' : 'asc';
+            
+            if ($request->sort == 'id_categoria') {
+                $query->orderBy('id_categoria', $direction);
+            } elseif ($request->sort == 'nombre') {
+                $query->orderBy('nombre', $direction);
+            } elseif ($request->sort == 'familia') {
+                // Ordenar por nombre de familia requiere un join
+                $query->join('familias', 'categorias.id_familia', '=', 'familias.id_familia')
+                      ->select('categorias.*')
+                      ->orderBy('familias.nombre', $direction);
+            }
+        } else {
+            // Ordenamiento predeterminado
+            $query->orderBy('id_categoria', 'desc');
+        }
+        
+        // Paginación
+        $perPage = $request->has('per_page') ? (int)$request->per_page : 10;
+        $categorias = $query->paginate($perPage);
+        
+        // Si hay un join en la consulta, es posible que necesitemos mantener los parámetros de consulta en la URL
+        $categorias->appends($request->except('page'));
+        
         return view('admin.categorias.index', compact('categorias'));
     }
     
@@ -25,7 +64,7 @@ class CategoriaController extends Controller
     public function create()
     {
         // Obtener todas las familias para el formulario de creación
-        $familias = \App\Models\Familia::all();
+        $familias = Familia::all();
         //retornar la vista de crear categoria
         return view('admin.categorias.create', compact('familias'));
     }
@@ -70,7 +109,7 @@ class CategoriaController extends Controller
     public function edit(Categoria $categoria)
     {
         // Obtener todas las familias para el formulario de edición
-        $familias = \App\Models\Familia::all();
+        $familias = Familia::all();
         
         //retornar la vista de editar categoria
         return view('admin.categorias.edit', compact('categoria', 'familias'));

@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Opcion extends Model
 {
+    //
     use HasFactory;
 
-    protected $primaryKey = 'id_opcion';
     protected $fillable = [
         'nombre',
         'tipo',
     ];
 
-    // Relación muchos a muchos productos 
+    //relacion muchos a muchos productos 
     public function productos()
     {
         return $this->belongsToMany(Producto::class)
@@ -23,9 +23,13 @@ class Opcion extends Model
             ->withTimestamps(); 
     }
 
-    // Relación uno a muchos caracteristica con la clave foránea definida explícitamente
+    //relacion uno a muchos caracteristica
     public function caracteristicas()
     {
         return $this->hasMany(Caracteristica::class, 'id_opcion', 'id_opcion');
     }
+
+    
+
+
 }

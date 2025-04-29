@@ -7,26 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class Caracteristica extends Model
 {
+    //
     use HasFactory;
-    
-    protected $primaryKey = 'id_caracteristica';
-    
+
     protected $fillable = [
+        'nombre',
         'valor',
         'descripcion',
-        'id_opcion',
+        'id_opcion'
     ];
 
-    // Definir correctamente la relación con Opcion
-    public function opcion()
+    //relacion uno a muchos variantes
+    public function variante()
     {
-        return $this->belongsTo(Opcion::class, 'id_opcion', 'id_opcion');
+        return $this->belongsTo(Variante::class)
+            ->withTimestamps();
     }
-    
-    // Relación con la tabla pivote/variante si existe
-    public function variantes()
-    {
-        return $this->belongsToMany(Variante::class, 'caracteristica_variante', 
-                                    'id_caracteristica', 'id_variante');
-    }
+
+
+
 }

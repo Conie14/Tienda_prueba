@@ -15,8 +15,53 @@ class ProductoController extends Controller
      */
     public function index(Request $request)
     {
-        $perPage = $request->input('perPage', 10);
-        $productos = Producto::orderBy('id_producto', 'desc')->paginate($perPage);
+        $query = Producto::with(['provedor', 'subcategoria']);
+        
+        // Aplicar búsqueda si existe
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nombre', 'LIKE', "%{$search}%")
+                  ->orWhere('sku', 'LIKE', "%{$search}%")
+                  ->orWhere('descripcion', 'LIKE', "%{$search}%")
+                  ->orWhere('precio', 'LIKE', "%{$search}%")
+                  ->orWhere('id_producto', 'LIKE', "%{$search}%")
+                  ->orWhereHas('provedor', function($q) use ($search) {
+                      $q->where('nombre', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('subcategoria', function($q) use ($search) {
+                      $q->where('nombre', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Aplicar ordenamiento
+        if ($request->has('sort')) {
+            $direction = $request->direction == 'desc' ? 'desc' : 'asc';
+            
+            if (in_array($request->sort, ['id_producto', 'sku', 'nombre', 'descripcion', 'precio'])) {
+                $query->orderBy($request->sort, $direction);
+            } elseif ($request->sort == 'subcategoria') {
+                $query->join('subcategorias', 'productos.id_subcategoria', '=', 'subcategorias.id_subcategoria')
+                      ->select('productos.*')
+                      ->orderBy('subcategorias.nombre', $direction);
+            } elseif ($request->sort == 'provedor') {
+                $query->join('provedors', 'productos.id_provedor', '=', 'provedors.id_provedor')
+                      ->select('productos.*')
+                      ->orderBy('provedors.nombre', $direction);
+            }
+        } else {
+            // Ordenamiento predeterminado
+            $query->orderBy('id_producto', 'desc');
+        }
+        
+        // Paginación
+        $perPage = $request->has('per_page') ? (int)$request->per_page : 10;
+        $productos = $query->paginate($perPage);
+        
+        // Mantener los parámetros de consulta en la URL
+        $productos->appends($request->except('page'));
+        
         return view('admin.productos.index', compact('productos'));
     }
 
@@ -50,8 +95,16 @@ class ProductoController extends Controller
             'id_subcategoria' => 'required|exists:subcategorias,id_subcategoria',  // Validar que id_subcategoria exista en la tabla subcategorias
         ]);
         
-        //crear el producto
-        Producto::create($request->all());
+        // Crear producto (sin la imagen primero)
+        $producto = new Producto($request->except('imagen'));
+        
+        // Si hay una imagen, guardarla
+        if ($request->hasFile('imagen')) {
+            $imagePath = $request->file('imagen')->store('productos', 'public');
+            $producto->imagen = $imagePath;
+        }
+        
+        $producto->save();
         
         // Agregar el mensaje SweetAlert a la sesión
         session()->flash('swal', [
@@ -93,6 +146,7 @@ class ProductoController extends Controller
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // Validar imagen
             'precio' => 'required|numeric|min:0',
             'id_subcategoria' => 'required|exists:subcategorias,id_subcategoria',  // Validar que id_subcategoria exista en la tabla subcategorias
+            'id_provedor' => 'required|exists:provedors,id_provedor',  // Validar que id_provedor exista en la tabla provedors
         ]);
     
         // Si el usuario subió una imagen
@@ -100,7 +154,7 @@ class ProductoController extends Controller
             // Almacenar la imagen y obtener su ruta
             $imagePath = $request->file('imagen')->store('productos', 'public');
             // Actualizar el producto con la nueva ruta de imagen
-            $producto->imagen= $imagePath;
+            $producto->imagen = $imagePath;
         }
     
         // Actualizar otros campos del producto
@@ -109,6 +163,7 @@ class ProductoController extends Controller
         $producto->descripcion = $request->input('descripcion');
         $producto->precio = $request->input('precio');
         $producto->id_subcategoria = $request->input('id_subcategoria');
+        $producto->id_provedor = $request->input('id_provedor');
     
         // Guardar el producto actualizado
         $producto->save();

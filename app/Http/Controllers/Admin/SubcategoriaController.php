@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Subcategoria;
+use App\Models\Categoria;
 use Illuminate\Http\Request;
 
 class SubcategoriaController extends Controller
@@ -11,12 +12,51 @@ class SubcategoriaController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $subcategorias = Subcategoria::with('categoria')
-        ->orderBy('id_subcategoria', 'desc')
-        ->paginate(10);
+        $query = Subcategoria::with('categoria');
+        
+        // Aplicar búsqueda si existe
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nombre', 'LIKE', "%{$search}%")
+                  ->orWhere('descripcion', 'LIKE', "%{$search}%")
+                  ->orWhere('id_subcategoria', 'LIKE', "%{$search}%")
+                  ->orWhereHas('categoria', function($q) use ($search) {
+                      $q->where('nombre', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Aplicar ordenamiento
+        if ($request->has('sort')) {
+            $direction = $request->direction == 'desc' ? 'desc' : 'asc';
+            
+            if ($request->sort == 'id_subcategoria') {
+                $query->orderBy('id_subcategoria', $direction);
+            } elseif ($request->sort == 'nombre') {
+                $query->orderBy('nombre', $direction);
+            } elseif ($request->sort == 'descripcion') {
+                $query->orderBy('descripcion', $direction);
+            } elseif ($request->sort == 'categoria') {
+                // Ordenar por nombre de categoría requiere un join
+                $query->join('categorias', 'subcategorias.id_categoria', '=', 'categorias.id_categoria')
+                      ->select('subcategorias.*')
+                      ->orderBy('categorias.nombre', $direction);
+            }
+        } else {
+            // Ordenamiento predeterminado
+            $query->orderBy('id_subcategoria', 'desc');
+        }
+        
+        // Paginación
+        $perPage = $request->has('per_page') ? (int)$request->per_page : 10;
+        $subcategorias = $query->paginate($perPage);
+        
+        // Si hay un join en la consulta, es posible que necesitemos mantener los parámetros de consulta en la URL
+        $subcategorias->appends($request->except('page'));
+        
         return view('admin.subcategorias.index', compact('subcategorias'));
     }
 
@@ -27,7 +67,7 @@ class SubcategoriaController extends Controller
     {
         //
         // Obtener todas las categorías para el formulario de creación
-        $categorias = \App\Models\Categoria::all();
+        $categorias = Categoria::all();
         //retornar la vista de crear subcategoria
         return view('admin.subcategorias.create', compact('categorias'));
     }
@@ -72,7 +112,7 @@ class SubcategoriaController extends Controller
     public function edit(Subcategoria $subcategoria)
     {
         //obtener todas las categorías para el formulario de edición
-        $categorias = \App\Models\Categoria::all();
+        $categorias = Categoria::all();
         //retornar la vista de editar subcategoria
         return view('admin.subcategorias.edit', compact('subcategoria', 'categorias'));
     }
@@ -92,8 +132,8 @@ class SubcategoriaController extends Controller
         $subcategoria->update($request->all());
 
         session()->flash('swal', [
-            'title' => 'Categoría actualizado',
-            'text' => 'La categoría se ha actualizado correctamente',
+            'title' => 'Subcategoría actualizada',
+            'text' => 'La subcategoría se ha actualizado correctamente',
             'icon' => 'success',
         ]);
 
